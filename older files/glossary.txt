@@ -1,0 +1,6 @@
+caseYear = ['decision_date']
+caseCitation = ['citations'][0]['cite']
+caseCourtAbbrev = ['court']['name_abbreviation']
+citedTitle = 
+citedSentence = 
+cited within ['casebody']['data']['opinions']..['text']
