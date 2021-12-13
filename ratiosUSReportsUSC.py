@@ -36,7 +36,7 @@ def get_case_texts():
 
 
 def custom_cleaner(s):
-    return s.replace('’', '\'').replace('‘', '\'').replace('”', '"').replace('“', '"').replace('´', '\'').replace('–', '-')
+    return s.replace('’', '\'').replace('‘', '\'').replace('”', '"').replace('“', '"').replace('´', '\'').replace('–', '-').replace("U. S. C.", 'USC')
 
 
 def cleaned_text(s):
