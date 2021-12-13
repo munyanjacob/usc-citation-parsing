@@ -3,3 +3,5 @@ reporters.csv
 secret.py
 *.xlsx
 *.dat
+secret.txt
+bfg*.jar
