@@ -13,7 +13,7 @@ opinion_url = 'https://api.case.law/v1/cases/3922151/?full_case=true'
 opinion_text = " ".join([opinion["text"] for opinion in requests.get(
     opinion_url,
     headers={
-        'Authorization': 'Token ***REMOVED***'
+        'Authorization': 'Token '
     }).json()["casebody"]["data"]["opinions"]])
 
 

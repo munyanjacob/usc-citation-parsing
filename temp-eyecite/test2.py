@@ -15,7 +15,7 @@ if not Path(output_path).exists():
     print("Downloading to %s ..." % output_path)
     with open(output_path, 'wb') as out_file:
         shutil.copyfileobj(requests.get(download_url, stream=True, headers={
-                           'Authorization': 'Token ***REMOVED***'}).raw, out_file)
+                           'Authorization': 'Token '}).raw, out_file)
     print("Done.")
 
 
