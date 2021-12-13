@@ -40,18 +40,17 @@ def custom_cleaner(s):
 
 
 def cleaned_text(s):
-    return clean_text(s, ['html', 'all_whitespace', 'underscores', custom_cleaner])
+    return clean_text(s, ['html', 'all_whitespace', 'underscores', custom_cleaner]) if len(s) > 0 else ""
 
 
 i = 0
 # extract citations
 for url, case_text in get_case_texts():
     case_text = cleaned_text(case_text)
+    #i += 1
+    # print(i)
     if "denied." in case_text[:200]:
         continue
-    print(case_text)
-    print(url)
-    print("-----")
-    i += 1
-    if i > 50:
+    if "U.S.C." in case_text and len(case_text) < 10000:
+        print(case_text)
         exit()
