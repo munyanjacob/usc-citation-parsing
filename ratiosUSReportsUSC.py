@@ -5,6 +5,7 @@ import json
 import requests
 from pathlib import Path
 from eyecite import clean_text
+from extractionHelpers import process
 
 
 # download data file if not already downloaded
@@ -36,7 +37,7 @@ def get_case_texts():
 
 
 def custom_cleaner(s):
-    return s.replace('’', '\'').replace('‘', '\'').replace('”', '"').replace('“', '"').replace('´', '\'').replace('–', '-').replace("U. S. C.", 'USC')
+    return s.replace('’', '\'').replace('‘', '\'').replace('”', '"').replace('“', '"').replace('´', '\'').replace('–', '-').replace("U. S. C. ", 'USC')
 
 
 def cleaned_text(s):
