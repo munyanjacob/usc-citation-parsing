@@ -5,3 +5,4 @@ secret.py
 *.dat
 secret.txt
 bfg*.jar
+**/__pycache__
