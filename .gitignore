@@ -1,5 +1,6 @@
 us_text.zip
 reporters.csv
+*.xlsx
 secret.py
 *.xlsx
 *.dat
