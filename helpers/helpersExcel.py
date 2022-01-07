@@ -5,13 +5,20 @@ from helpersExtraction import extractFromFile
 def initSheet(output_path):
     from pathlib import Path
 
-    if output_path[-5] != ".xlsx":
+    if len(output_path) < 5:
+        output_path += ".xlsx"
+
+    if output_path[-5:] != ".xlsx":
         output_path += ".xlsx"
 
     while Path(output_path).exists():
         output_path = input("File " + output_path +
                             " exists. Enter a new name: ")
-        if output_path[-5] != ".xlsx":
+
+        if len(output_path) < 5:
+            output_path += ".xlsx"
+
+        if output_path[-5:] != ".xlsx":
             output_path += ".xlsx"
     workbook = xlsxwriter.Workbook(output_path)
 
@@ -127,6 +134,15 @@ def createFullSpreadsheet(citations, output_path, citationType=None):
 
 
 if __name__ == '__main__':
+    import sys
+    spreadsheetName = "TestUSReporter"
     citationType = None
+    if len(sys.argv) == 2:
+        spreadsheetName = sys.argv[1]
+    elif len(sys.argv) == 3:
+        spreadsheetName = sys.argv[1]
+        citationType = sys.argv[2]
+    elif len(sys.argv) > 3:
+        exit("Invalid args")
     citations = extractFromFile("us_text.zip", None, citationType)
-    createFullSpreadsheet(citations, "TestUSReporter", citationType)
+    createFullSpreadsheet(citations, spreadsheetName, citationType)

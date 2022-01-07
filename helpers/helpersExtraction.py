@@ -42,14 +42,19 @@ def process(s, citationType=None):
     if re.search(toMatch, s):
         for r in re.findall(toMatch, s):
             key = r[0]
-            if key in results:
+            while key in results:
                 key += "."
-            if citationType == None:
-                results[key] = [(title, 'USCA' if 'A' in code else 'USC')
-                                for title, code in re.findall(reTitleAndUSC, r[0])]
-            else:
-                results[key] = [(title, type)
-                                for (title, type) in re.findall(reTitleAndUSC, r[0]) if type == citationType]
+
+            results[key] = [(title, 'USCA' if 'A' in code else 'USC')
+                            for title, code in re.findall(reTitleAndUSC, r[0])]
+
+            # if citationType == None:
+            # results[key] = [(title, 'USCA' if 'A' in code else 'USC')
+            #                     for title, code in re.findall(reTitleAndUSC, r[0])]
+
+            # else:
+            #     results[key] = [(title, type)
+            #                     for (title, type) in re.findall(reTitleAndUSC, r[0]) if type == citationType]
     return results
 
 
@@ -58,14 +63,39 @@ def extractFromFile(output_path, download_path=None, citationType=None):
     from helpersFileSetup import get_case_texts
     from os.path import exists
     import pickle
-    PIK = "pickle" + output_path + ".dat"
+
+    def filterType(results, citationType):
+        if citationType:
+            toRet = []
+            for case in results:
+                # case = {citations, year, cite, court}
+                newResults = {}
+                # results = [excerpt: [(title, type), (title, type)]
+                for excerpt, excerptCitations in case["citations"].items():
+                    relevantCitations = [
+                        item for item in excerptCitations if item[1] == citationType]
+                    if len(relevantCitations) > 0:
+                        newResults[excerpt] = relevantCitations
+
+                if len(newResults) > 0:
+                    case["citations"] = newResults
+                    toRet.append(case)
+            return toRet
+        else:
+            return results
+
+    # could make better by only saving the full results list (USC and USCA)
+    # and filter out citationType if specified
+    PIK = "pickle_" + output_path.replace(".zip", "") + ".dat"
 
     def loadall(filename):
         with open(filename, "rb") as f:
             return pickle.load(f)
 
     if exists(PIK):
-        return loadall(PIK)
+        print("true")
+        return filterType(loadall(PIK), citationType)
+    print("past")
 
     def custom_cleaner(s):
         return s.replace('’', "'").replace('‘', "'").replace('”', '"').replace('“', '"').replace('´', "'").replace('–', '-').replace("U. S. C. ", 'USC ')
@@ -89,7 +119,8 @@ def extractFromFile(output_path, download_path=None, citationType=None):
 
     with open(PIK, "wb") as f:
         pickle.dump(all_results, f)
-    return all_results
+
+    return filterType(all_results, citationType)
 
 
 if __name__ == '__main__':
