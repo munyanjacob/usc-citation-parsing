@@ -14,7 +14,7 @@ def process(s, citationType=None):
     reTitle = r'\s+([0-5]?\da?)'
 
     reUSC = r"((?:U\.? ?S\.? ?(?:C\.?|Code)|United States Code)" + \
-        r"(?: App| ?A\.?)?)"
+        r"(?: ?App| ?A\.?)?)"
 
     # need the title to be next to USC location
     reTitleAndUSC = reTitle + r'(?:,| of the)?\s+' + reUSC
@@ -44,12 +44,15 @@ def process(s, citationType=None):
             key = r[0]
             if key in results:
                 key += "."
-            if citationType == None:
-                results[key] = [(title, 'USCA' if 'A' in code else 'USC')
-                                for title, code in re.findall(reTitleAndUSC, r[0])]
-            else:
-                results[key] = [(title, type)
-                                for (title, type) in re.findall(reTitleAndUSC, r[0]) if type == citationType]
+            
+            results[key] = []
+
+            for title, code in re.findall(reTitleAndUSC, r[0]):
+                code = code.replace("United States", "US").replace("Code", "C").replace(' ', '').replace('.', '')
+                if "app" in code.lower():
+                    code = "USC"
+                if citationType == None or citationType == code:
+                    results[key].append((title, code))
     return results
 
 
@@ -58,7 +61,11 @@ def extractFromFile(output_path, download_path=None, citationType=None):
     from helpersFileSetup import get_case_texts
     from os.path import exists
     import pickle
-    PIK = "pickle" + output_path + ".dat"
+    if citationType:
+        PIK = output_path + "_" + citationType + ".dat"
+    else:
+        PIK = output_path + ".dat"
+
 
     def loadall(filename):
         with open(filename, "rb") as f:
@@ -96,6 +103,7 @@ if __name__ == '__main__':
     # from sampleCase import sample_full_text
     # sample_full_text = "All three are over 65 years old and have been denied enrollment in the Medicare Part B supplemental medical insurance program established by § 1831 et seq. of the Social Security Act of 1935, 49 Stat. 620, as added, 79 Stat. 301, and as amended, 42 U. S. C. § 1395j et seq. (1970 ed. and Supp. IV). They brought this action to challenge the statutory basis for that denial. Specifically, they attack 42 U. S. C. § 1395o (2) (1970 ed., Supp. IV), which grants eligibility to resident citi-zents who are 65 or older but denies eligibility to comparable aliens unless they have been admitted for permanent residence and also have resided in the United States for at least five years."
     #sample_full_text = " A variety of other federal statutes provide for disparate treatment of aliens and citizens. These include prohibitions and restrictions upon Government employment of aliens, e. g., 10 U. S. C. § 5571; 22 U. S. C. § 1044 (e), upon private employment of aliens, e. g., 10 U. S. C. § 2279; 12 U. S. C. § 72, and upon investments and businesses of aliens, e. g., 12 U. S. C. §619; 47 U. S. C. § 17; statutes excluding aliens from benefits available to citizens, e. g., 26 U. S. C. § 931 (1970 ed. and Supp. IV); 46 U. S. C. § 1171 (a), and from protections extended to citizens, e. g., 19 U.S. C. § 1526; 29 U. S. C. § 633a (1970 ed., Supp. IV); and statutes imposing added burdens upon aliens, e. g., 26 U. S. C. § 6851 (d); 28 U. S. C. § 1391 (d). Several statutes treat certain aliens more favorably than citizens. E. g., 19 U. S. C. § 1586 (e); 50 U. S. C. App. § 453 (1970 ed., Supp. IV) "
-    #sample_full_text = "Title 52 of the United States Code App. Section 200"
-    extractFromFile("us_text.zip")
-    # print(process(sample_full_text))
+    # sample_full_text = "Title 52 of the United States Code App. Section 200"
+    sample_full_text = 'The case is here on certiorari. " In computing net income there shall be allowed as deductions ... all the ordinary and necessary expenses paid or incurred during the taxable year in carrying on any trade or business." Revenue Act of 1924, c. 234, 43 Stat. 253, 269, § 214; 26 U.S.C. § 955; Revenue Act of 1926, c. 27, 44 Stat. 9, 26, § 214; 26 U.S.C.App. § 955; Revenue Act of 1928, c. 852, 45 Stat. 791, 799, § 23; cf.'
+    print(process(sample_full_text))
+    # extractFromFile("us_text.zip")
