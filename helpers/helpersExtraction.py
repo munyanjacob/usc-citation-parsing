@@ -11,6 +11,9 @@ def process(s, citationType=None):
     # start of string or start of new sentence
     reSentenceStart = r"(?:^|(?<=\. ))(" + reFirstSentenceChar
 
+    # munch when not start of new sentence
+    reMunchNonSentence = r"(?:(?!\.\s+(?![IVXLCDMUS])[A-Z]).)*?"
+
     reTitle = r'\s+([0-5]?\da?)'
 
     reUSC = r"((?:U\.? ?S\.? ?(?:C\.?|Code)|United States Code)" + \
@@ -19,14 +22,13 @@ def process(s, citationType=None):
     # need the title to be next to USC location
     reTitleAndUSC = reTitle + r'(?:,| of the)?\s+' + reUSC
 
-    reSection = r"(?:§+|[sS]ection)\s*([0-9\-]+)"
+    reSection = r"(?:§+|[sS]ection)\s*([0-9\-]+(?:\w|\s\(\w\))?)"
+
+    reTitleUSCSection = reTitleAndUSC + reMunchNonSentence + reSection
 
     # reModifiedFirstChar = r"(?![IVXLCDM])[A-Z0-9]"
 
     reSentenceEnd = r"(?:\.|$))(?=\s*$|\s+" + reFirstSentenceChar + ")"
-
-    # munch when not start of new sentence
-    reMunchNonSentence = r"(?:(?!\.\s+(?![IVXLCDMUS])[A-Z]).)*?"
 
     full_regex = reMunchNonSentence.join([reSentenceStart,
                                           reTitleAndUSC, reSection, reSentenceEnd])
@@ -42,7 +44,7 @@ def process(s, citationType=None):
     if re.search(toMatch, s):
         for r in re.findall(toMatch, s):
             key = r[0]
-            if key in results:
+            while key in results:
                 key += "."
             
             results[key] = []
@@ -53,6 +55,15 @@ def process(s, citationType=None):
                     code = "USC"
                 if citationType == None or citationType == code:
                     results[key].append((title, code))
+
+            # if len(re.findall(reTitleAndUSC, r[0])) != len(re.findall(reTitleUSCSection, r[0])):
+            #     print(key)
+            #     print(re.findall(reTitleAndUSC, r[0]))
+            #     print('-----------')
+            #     print(re.findall(reTitleUSCSection, r[0]))
+
+            # results[key] = [(title, 'USCA' if 'A' in code else 'USC', section)
+            #                 for title, code, section in re.findall(reTitleUSCSection, r[0])]
     return results
 
 
@@ -61,21 +72,45 @@ def extractFromFile(output_path, download_path=None, citationType=None):
     from helpersFileSetup import get_case_texts
     from os.path import exists
     import pickle
-    if citationType:
-        PIK = output_path + "_" + citationType + ".dat"
-    else:
-        PIK = output_path + ".dat"
+    # if citationType:
+    #     PIK = output_path + "_" + citationType + ".dat"
+    # else:
+    #     PIK = output_path + ".dat"
 
+
+    def filterType(results, citationType):
+        if citationType:
+            toRet = []
+            for case in results:
+                # case = {citations, year, cite, court}
+                newResults = {}
+                # results = [excerpt: [(title, type), (title, type)]
+                for excerpt, excerptCitations in case["citations"].items():
+                    relevantCitations = [
+                        item for item in excerptCitations if item[1] == citationType]
+                    if len(relevantCitations) > 0:
+                        newResults[excerpt] = relevantCitations
+
+                if len(newResults) > 0:
+                    case["citations"] = newResults
+                    toRet.append(case)
+            return toRet
+        else:
+            return results
+
+    # could make better by only saving the full results list (USC and USCA)
+    # and filter out citationType if specified
+    PIK = "pickle_" + output_path.replace(".zip", "") + ".dat"
 
     def loadall(filename):
         with open(filename, "rb") as f:
             return pickle.load(f)
 
     if exists(PIK):
-        return loadall(PIK)
+        return filterType(loadall(PIK), citationType)
 
     def custom_cleaner(s):
-        return s.replace('’', "'").replace('‘', "'").replace('”', '"').replace('“', '"').replace('´', "'").replace('–', '-').replace("U. S. C. ", 'USC ')
+        return s.replace('’', "'").replace('‘', "'").replace('”', '"').replace('“', '"').replace('´', "'").replace('–', '-').replace("U. S. C. ", 'USC ').replace("U. S. C.", "USC")
 
     def cleaned_text(s):
         return clean_text(s, ['html', 'all_whitespace', 'underscores', custom_cleaner]) if len(s) > 0 else ""
@@ -96,7 +131,8 @@ def extractFromFile(output_path, download_path=None, citationType=None):
 
     with open(PIK, "wb") as f:
         pickle.dump(all_results, f)
-    return all_results
+
+    return filterType(all_results, citationType)
 
 
 if __name__ == '__main__':
